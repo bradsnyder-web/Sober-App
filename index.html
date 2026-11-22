@@ -48,9 +48,8 @@ body{
   text-rendering:optimizeLegibility;
   padding:max(10px,env(safe-area-inset-top)) max(var(--pad),env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(var(--pad),env(safe-area-inset-left));
 }
-/* one quiet backdrop: a slow vertical fall-off into deeper blue, no spotlights */
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:linear-gradient(180deg,#0d1c36 0,var(--bg) 38%,var(--bg-deep) 100%)}
+/* one quiet backdrop: a slow vertical fall-off into deeper blue. Attached to the page (not fixed), so it never jumps when browser bars move. */
+body{min-height:100svh;background:linear-gradient(180deg,#0d1c36 0,var(--bg) 38%,var(--bg-deep) 100%) no-repeat}
 
 main{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:var(--gap)}
 .seg,.col{display:contents}
@@ -578,14 +577,18 @@ function streakDays(st,now){
   return Math.max(0,(b-a)/DAY);
 }
 const fmtLen=d=>{const n=Math.floor(d);return `${n.toLocaleString()} ${n===1?'day':'days'}`};
+// Write to the DOM only when a value changed, so scrolling is never interrupted by needless repaints.
+const setT=(id,v)=>{const e=$(id);v=String(v);if(e._t!==v){e._t=v;e.textContent=v}};
+const setA=(e,k,v)=>{v=String(v);if(e['_a'+k]!==v){e['_a'+k]=v;e.setAttribute(k,v)}};
+const setS=(e,k,v)=>{v=String(v);if(e['_s'+k]!==v){e['_s'+k]=v;e.style.setProperty(k,v)}};
 function renderStreaks(now){
   const lens=state.streaks.map(st=>streakDays(st,now));
   const total=lens.reduce((a,b)=>a+b,0);
-  $('curDays').textContent=Math.floor(lens[lens.length-1]).toLocaleString();
-  $('bestDays').textContent=Math.floor(Math.max(...lens)).toLocaleString();
-  $('totDays').textContent=Math.floor(total).toLocaleString();
+  setT('curDays',Math.floor(lens[lens.length-1]).toLocaleString());
+  setT('bestDays',Math.floor(Math.max(...lens)).toLocaleString());
+  setT('totDays',Math.floor(total).toLocaleString());
   const resets=state.streaks.length-1;
-  $('resetCount').textContent=resets?`${resets} ${resets===1?'reset':'resets'}`:'No resets';
+  setT('resetCount',resets?`${resets} ${resets===1?'reset':'resets'}`:'No resets');
   const items=state.streaks.map((st,i)=>{
     const a=new Date(st.s),isCur=!st.e;
     return `<li class="${isCur?'cur':''}"><span>${fmtDate(a)} – ${isCur?'now':fmtDate(new Date(st.e))}</span><span>${fmtLen(lens[i])}</span></li>`;
@@ -597,44 +600,44 @@ function renderStreaks(now){
 function renderSavings(total){
   const {daily,kcalDaily}=state;
   if(!daily&&!kcalDaily){
-    $('money').textContent=usd0.format(0);$('kcal').textContent='0';
-    $('moneySub').textContent='Not set up yet';$('kcalSub').textContent='';
-    $('perDay').textContent='';$('setupSavings').textContent='Set up savings calculator';return;
+    setT('money',usd0.format(0));setT('kcal','0');
+    setT('moneySub','Not set up yet');setT('kcalSub','');
+    setT('perDay','');setT('setupSavings','Set up savings calculator');return;
   }
-  $('setupSavings').textContent='Edit savings calculator';
-  $('money').textContent=usd.format(daily*total);
-  $('moneySub').textContent=daily?`${usd.format(daily)}/day · ${usd0.format(daily*30.4)}/mo`:'';
-  $('kcal').textContent=Math.round(kcalDaily*total).toLocaleString();
-  $('kcalSub').textContent=kcalDaily?`${Math.round(kcalDaily).toLocaleString()}/day`:'';
-  $('perDay').textContent=daily?`${usd0.format(daily*365)}/yr pace`:'';
+  setT('setupSavings','Edit savings calculator');
+  setT('money',usd.format(daily*total));
+  setT('moneySub',daily?`${usd.format(daily)}/day · ${usd0.format(daily*30.4)}/mo`:'');
+  setT('kcal',Math.round(kcalDaily*total).toLocaleString());
+  setT('kcalSub',kcalDaily?`${Math.round(kcalDaily).toLocaleString()}/day`:'');
+  setT('perDay',daily?`${usd0.format(daily*365)}/yr pace`:'');
 }
 
 let lastDays=-1;
 function tick(){
   const now=new Date();
   const total=renderStreaks(now);renderSavings(total);
-  if(now<start){$('days').textContent='0';return}
+  if(now<start){setT('days','0');return}
   const b=breakdown(start,now);
   const td=Math.floor((now-start)/DAY);
-  $('days').textContent=td.toLocaleString();$('days').dataset.len=String(td).length;
-  $('dayWord').textContent=td===1?'day':'days';
-  $('y').textContent=b.y;$('m').textContent=b.m;$('d').textContent=b.d;
-  $('h').textContent=pad(b.h);$('mi').textContent=pad(b.mi);$('s').textContent=pad(b.s);
-  $('since').textContent='Since '+start.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  setT('days',td.toLocaleString());setA($('days'),'data-len',String(td).length);
+  setT('dayWord',td===1?'day':'days');
+  setT('y',b.y);setT('m',b.m);setT('d',b.d);
+  setT('h',pad(b.h));setT('mi',pad(b.mi));setT('s',pad(b.s));
+  setT('since','Since '+start.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'}));
 
   const list=MILESTONES.map(m=>({...m,at:m.f(start)}));
   const idx=list.findIndex(m=>m.at>now);
   const next=idx===-1?null:list[idx];
   if(next){
     const p=Math.min(1,Math.max(0,(now-start)/(next.at-start)));
-    $('arc').style.width=(p*100)+'%';$('arc').closest('.ring').style.setProperty('--p',p);
-    $('pct').textContent=Math.floor(p*100)+'%';
-    $('nextName').textContent=next.n;
+    setS($('arc'),'width',(p*100).toFixed(2)+'%');setS($('arc').closest('.ring'),'--p',p.toFixed(4));
+    setT('pct',Math.floor(p*100)+'%');
+    setT('nextName',next.n);
     const left=Math.ceil((next.at-now)/DAY);
-    $('nextSub').textContent=`${left} ${left===1?'day':'days'} to go · ${fmtDate(next.at)}`;
+    setT('nextSub',`${left} ${left===1?'day':'days'} to go · ${fmtDate(next.at)}`);
   }else{
-    $('arc').style.width='100%';$('arc').closest('.ring').style.setProperty('--p',1);$('pct').textContent='∞';
-    $('nextName').textContent='Beyond milestones';$('nextSub').textContent='Every day counts.';
+    setS($('arc'),'width','100%');setS($('arc').closest('.ring'),'--p','1');setT('pct','∞');
+    setT('nextName','Beyond milestones');setT('nextSub','Every day counts.');
   }
   if(td!==lastDays){lastDays=td;buildMilestones(now)}
 }

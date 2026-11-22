@@ -170,6 +170,8 @@ dialog{max-height:90vh;overflow:auto}
   .seg{display:flex;flex-direction:column;gap:10px;padding:max(12px,env(safe-area-inset-top)) 0 10px;overflow:auto}
   .col{display:contents}
 }
+.help{margin-top:8px}.help b{color:var(--foreground);font-weight:500}
+.srcs{margin-top:10px}.srcs a{color:var(--primary)}
 /* dialog */
 dialog{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--foreground);
   padding:22px;width:min(92vw,400px);margin:auto}
@@ -257,7 +259,7 @@ footer{text-align:center;font-size:11px;color:var(--muted-foreground);padding:2p
 </main>
 
 <dialog id="dlg">
-  <form method="dialog" id="form">
+  <form method="dialog" id="form" novalidate>
     <h3>Settings</h3>
     <label for="date">Current streak start</label>
     <div class="two">
@@ -274,21 +276,31 @@ footer{text-align:center;font-size:11px;color:var(--muted-foreground);padding:2p
     </div>
 
     <div class="pane on" data-pane="drinks">
-      <label for="preset">Typical drink</label>
-      <select id="preset">
-        <option value="">Custom</option>
-        <option value="beer">Beer (12 oz)</option>
-        <option value="craft">Craft beer / IPA (16 oz)</option>
-        <option value="wine">Wine (5 oz glass)</option>
-        <option value="cocktail">Cocktail</option>
-        <option value="shot">Liquor shot / mixed drink</option>
-      </select>
+      <div class="two">
+        <div><label for="preset">Typical drink</label>
+          <select id="preset">
+            <option value="">Custom</option>
+            <option value="beer">Beer, regular (12 oz)</option>
+            <option value="light">Beer, light (12 oz)</option>
+            <option value="craft">Craft beer / IPA (pint)</option>
+            <option value="wine">Wine (5 oz)</option>
+            <option value="spirit">Liquor, straight (1.5 oz)</option>
+            <option value="cocktail">Cocktail</option>
+          </select></div>
+        <div><label for="where">Where you drink</label>
+          <select id="where">
+            <option value="mix">Mix of both</option>
+            <option value="home">Mostly at home</option>
+            <option value="bar">Mostly out</option>
+          </select></div>
+      </div>
       <div class="two">
         <div><label for="dpw">Drinks per week</label><input type="number" id="dpw" inputmode="decimal" min="0" step="any" placeholder="e.g. 20"></div>
-        <div><label for="price">Avg price per drink ($)</label><input type="number" id="price" inputmode="decimal" min="0" step="any" placeholder="e.g. 8"></div>
+        <div><label for="price">Price per drink ($)</label><input type="number" id="price" inputmode="decimal" min="0" step="any" placeholder="e.g. 8"></div>
       </div>
       <label for="kcalDrink">Calories per drink</label>
       <input type="number" id="kcalDrink" inputmode="decimal" min="0" step="any" placeholder="e.g. 150">
+      <p class="note help">Count <b>standard drinks</b>: 12 oz beer, 5 oz wine or 1.5 oz liquor. A pint, a big pour or a strong cocktail can count as 1.5 to 2. Picking a drink fills in typical US price and calories; change them to match your own habits.</p>
     </div>
 
     <div class="pane" data-pane="spend">
@@ -307,6 +319,8 @@ footer{text-align:center;font-size:11px;color:var(--muted-foreground);padding:2p
       </div>
     </div>
 
+    <details class="srcs"><summary>Where these estimates come from</summary>
+      <p class="note">Calories per drink: <a href="https://www.cdc.gov/nchs/products/databriefs/db110.htm" target="_blank" rel="noopener">CDC</a> (beer ~150, wine ~120, liquor ~100) and <a href="https://medlineplus.gov/ency/patientinstructions/000886.htm" target="_blank" rel="noopener">MedlinePlus</a> (light beer ~105, craft beer 170+). Standard drink sizes: <a href="https://www.niaaa.nih.gov/alcohols-effects-health/what-standard-drink" target="_blank" rel="noopener">NIAAA</a>. Out-of-home prices: median US bar beer about $6.60 (<a href="https://pos.toasttab.com/blog/on-the-line/bar-beer-prices" target="_blank" rel="noopener">Toast</a>, 2026); wine and cocktail prices are typical ranges from industry guides ($7 to $15 and $8 to $14). Home prices are rough retail estimates. Calories are the drink only, so the total is a rough estimate, not a weight prediction.</p></details>
     <div class="preview" id="preview">Enter your numbers to see an estimate.</div>
 
     <hr>
@@ -324,8 +338,8 @@ footer{text-align:center;font-size:11px;color:var(--muted-foreground);padding:2p
     <button type="button" class="btn danger cta" id="resetBtn">Reset streak…</button>
 
     <div class="row">
-      <button class="btn" value="cancel" formnovalidate>Cancel</button>
-      <button class="btn primary" value="save">Save</button>
+      <button type="button" class="btn" id="cancelBtn">Close</button>
+      <button type="submit" class="btn primary">Save</button>
     </div>
   </form>
 </dialog>
@@ -340,8 +354,8 @@ footer{text-align:center;font-size:11px;color:var(--muted-foreground);padding:2p
       <input type="time" id="rtime" required>
     </div>
     <div class="row">
-      <button class="btn" value="cancel" formnovalidate>Cancel</button>
-      <button class="btn danger" value="reset">Reset</button>
+      <button type="button" class="btn" id="rcancel">Cancel</button>
+      <button type="submit" class="btn danger">Reset</button>
     </div>
   </form>
 </dialog>
@@ -484,7 +498,15 @@ function tick(){
 }
 
 // ---- calculator
-const PRESETS={beer:[6,150],craft:[8,220],wine:[10,125],cocktail:[14,200],shot:[9,110]};
+// [home price, bar price, calories] per drink. Calories: CDC / MedlinePlus. Bar beer: Toast 2026 median. Others: typical ranges.
+const PRESETS={beer:[1.75,6.6,150],light:[1.5,6,105],craft:[3,8,220],wine:[3,11,120],spirit:[1.5,8,100],cocktail:[4.5,13,220]};
+function applyPreset(){
+  const p=PRESETS[$('preset').value];if(!p)return;
+  const w=$('where').value;
+  const price=w==='home'?p[0]:w==='bar'?p[1]:(p[0]+p[1])/2;
+  $('price').value=Math.round(price*100)/100;$('kcalDrink').value=p[2];
+  preview();persistCalc();
+}
 let mode='drinks';
 function setMode(m){
   mode=m;
@@ -510,7 +532,7 @@ function preview(){
     :'Enter your numbers to see an estimate.';
 }
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
-$('preset').onchange=e=>{const p=PRESETS[e.target.value];if(p){$('price').value=p[0];$('kcalDrink').value=p[1];preview()}};
+$('preset').onchange=applyPreset;$('where').onchange=applyPreset;
 ['dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'].forEach(id=>$(id).addEventListener('input',preview));
 
 function openSettings(tab){
@@ -520,7 +542,7 @@ function openSettings(tab){
   $('dpw').value=c.dpw??'';$('price').value=c.price??'';$('kcalDrink').value=c.kcalDrink??'';
   $('spend').value=c.spend??'';$('per').value=c.per||'week';$('kcalSpend').value=c.kcalSpend??'';
   $('dMoney').value=c.dMoney??'';$('dKcal').value=c.dKcal??'';
-  $('preset').value='';
+  $('preset').value=c.preset||'';$('where').value=c.where||'mix';
   $('bkMsg').textContent=lastBackupText();
   setMode(c.mode||'drinks');
   $('dlg').showModal();
@@ -529,22 +551,32 @@ function openSettings(tab){
 $('edit').onclick=()=>openSettings();
 $('setupSavings').onclick=()=>openSettings(true);
 
-$('form').addEventListener('submit',e=>{
-  if(!(e.submitter&&e.submitter.value==='save'))return;
+function persistCalc(){
+  const {money,kcal}=compute();
+  state.calc={mode,preset:$('preset').value,where:$('where').value,dpw:$('dpw').value,price:$('price').value,kcalDrink:$('kcalDrink').value,
+    spend:$('spend').value,per:$('per').value,kcalSpend:$('kcalSpend').value,
+    dMoney:$('dMoney').value,dKcal:$('dKcal').value};
+  state.daily=money;state.kcalDaily=kcal;
+  save();tick();
+}
+// savings save automatically as you type
+['dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'].forEach(id=>$(id).addEventListener('input',persistCalc));
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',persistCalc));
+
+function saveDate(){
   const v=`${$('date').value}T${$('time').value||'00:00'}`;
   const d=new Date(v);
   if(!isNaN(d)){
     cur().s=v;start=d;
     const prev=state.streaks[state.streaks.length-2];
-    if(prev&&prev.e&&new Date(prev.e)>d)prev.e=v; // keep history consistent
+    if(prev&&prev.e&&new Date(prev.e)>d)prev.e=v;
   }
-  const {money,kcal}=compute();
-  state.calc={mode,dpw:$('dpw').value,price:$('price').value,kcalDrink:$('kcalDrink').value,
-    spend:$('spend').value,per:$('per').value,kcalSpend:$('kcalSpend').value,
-    dMoney:$('dMoney').value,dKcal:$('dKcal').value};
-  state.daily=money;state.kcalDaily=kcal;
-  save();lastDays=-1;tick();
-});
+  persistCalc();lastDays=-1;tick();
+}
+// Save is the default submit button, so Enter / Go on the keyboard saves instead of cancelling
+$('form').addEventListener('submit',e=>{e.preventDefault();saveDate();$('dlg').close()});
+$('cancelBtn').onclick=()=>$('dlg').close();
+$('dlg').addEventListener('close',()=>{persistCalc()});
 
 // ---- backup & restore
 function lastBackupText(){
@@ -606,8 +638,9 @@ $('resetBtn').onclick=()=>{
   $('rdate').value=toISO(now).slice(0,10);$('rtime').value=toISO(now).slice(11);
   $('dlg').close();$('rdlg').showModal();
 };
+$('rcancel').onclick=()=>$('rdlg').close();
 $('rform').addEventListener('submit',e=>{
-  if(!(e.submitter&&e.submitter.value==='reset'))return;
+  e.preventDefault();$('rdlg').close();
   const v=`${$('rdate').value}T${$('rtime').value||'00:00'}`;
   const d=new Date(v);if(isNaN(d))return;
   const prevStart=new Date(cur().s);

@@ -721,7 +721,6 @@ function saveDate(){
 // Save is the default submit button, so Enter / Go on the keyboard saves instead of cancelling
 $('form').addEventListener('submit',e=>{e.preventDefault();saveDate();$('dlg').close()});
 $('cancelBtn').onclick=()=>$('dlg').close();
-$('dlg').addEventListener('close',()=>{persistCalc()});
 
 // ---- backup & restore
 function lastBackupText(){
@@ -739,7 +738,7 @@ function sanitize(o){
   streaks[streaks.length-1].e=null;
   const c=(o.calc&&typeof o.calc==='object')?o.calc:{};
   const calc={};
-  for(const k of ['mode','dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'])if(c[k]!==undefined)calc[k]=String(c[k]);
+  for(const k of ['mode','preset','where','dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'])if(c[k]!==undefined)calc[k]=String(c[k]);
   if(!['drinks','spend','direct'].includes(calc.mode))calc.mode='drinks';
   return {streaks,calc,daily:num(o.daily),kcalDaily:num(o.kcalDaily)};
 }

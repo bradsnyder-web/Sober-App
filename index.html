@@ -53,7 +53,7 @@ body{min-height:100svh;background:linear-gradient(180deg,#0d1c36 0,var(--bg) 38%
 
 main{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:var(--gap)}
 .seg,.col{display:contents}
-footer{order:9}.hero{order:1}.next{order:2}.sav{order:3}.mil{order:4}.str{order:5}
+footer{order:9}.hero{order:1}.next{order:2}.sav{order:3}.tod{order:4}.mil{order:5}.str{order:6}
 
 /* ---------- header ---------- */
 header{display:flex;justify-content:space-between;align-items:center;min-height:40px;margin-bottom:-6px}
@@ -232,6 +232,42 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
 @keyframes sweep{from{clip-path:inset(-6px 100% -6px 0)}to{clip-path:inset(-6px 0 -6px 0)}}
 @keyframes sheet{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
 
+
+/* ---------- flair ---------- */
+/* living horizon: a soft sky behind the count that follows your local time of day */
+.hero{position:relative;isolation:isolate}
+.horizon{position:absolute;z-index:-1;inset:-6px -10px -2px -10px;pointer-events:none;overflow:hidden;border-radius:24px;
+  background:linear-gradient(180deg,var(--sky-a,#0d1c36) 0%,var(--sky-b,#0a1528) 100%);
+  -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 22%,transparent 100%);mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 22%,transparent 100%)}
+.horizon .sun{position:absolute;left:calc(var(--sx,.5)*100%);top:calc(var(--sy,.5)*100%);width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;
+  background:radial-gradient(circle,var(--sun-c,#dde8ff) 0 22%,transparent 66%);opacity:var(--so,.35)}
+.horizon .line{position:absolute;left:0;right:0;top:78%;height:1px;background:linear-gradient(90deg,transparent,rgba(141,220,197,.35),transparent)}
+/* around now */
+.tod p.t{font-size:15px;line-height:1.55;color:var(--text);max-width:62ch}
+.tod .src{margin-top:8px}
+.tod .src p{font-size:13px;color:var(--muted);line-height:1.55;margin-top:8px}
+.tod .src a{color:var(--blue)}
+.equiv{margin-top:10px;font-size:14px;color:var(--muted);min-height:1.45em}
+.equiv:empty{display:none}
+.live em{display:inline-block}
+/* milestone moment */
+dialog.cele{border:0;background:transparent;padding:0;max-width:none;max-height:none;width:min(calc(100vw - 32px),380px);margin:auto;color:var(--text);overflow:visible}
+dialog.cele::backdrop{background:rgba(4,9,20,.82)}
+.cele-card{text-align:center;background:linear-gradient(180deg,#14284a,#0e1c36);border:1px solid var(--line-strong);border-radius:22px;padding:30px 24px 24px;box-shadow:0 30px 80px -20px rgba(0,0,0,.8)}
+.cele-art{width:132px;height:84px;margin:0 auto 6px;overflow:hidden;position:relative}
+.cele-art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cele-card .label{color:var(--sea)}
+.cele-card h2{font:500 clamp(46px,16vw,64px)/1 var(--serif);letter-spacing:-.04em;margin:8px 0 6px}
+.cele-card p{color:var(--muted);font-size:15px;line-height:1.5;margin:0 auto 6px;max-width:30ch}
+.cele-card .stat-line{color:var(--sea);font-size:14px;margin-bottom:18px}
+.cele-card .btn{width:100%;min-height:46px}
+@media (prefers-reduced-motion:no-preference){
+  dialog.cele[open] .cele-card{animation:sheet .45s cubic-bezier(.2,.7,.2,1)}
+  dialog.cele[open] .cele-sun{animation:sunrise 1.3s .15s cubic-bezier(.2,.7,.2,1) both}
+  dialog.cele[open] h2{animation:settle .9s .35s cubic-bezier(.2,.7,.2,1) both}
+}
+@keyframes sunrise{from{transform:translateY(46px);opacity:0}to{transform:none;opacity:1}}
+
 /* ---------- responsive ---------- */
 /* roomy phones */
 @media (min-width:400px) and (min-height:760px){
@@ -272,9 +308,11 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
   .sec{padding-top:12px}.ms-head{margin-bottom:6px}
   .stat b{font-size:clamp(26px,7cqi,32px)}
   footer{padding-top:0;padding-bottom:0}
+  .tod p.t{font-size:14px;line-height:1.45}.tod .src summary{min-height:0}.tod .src{margin-top:2px}
+  .equiv{margin-top:4px}
 }
 /* short + wide: landscape, keep it compact */
-@media (min-width:700px) and (max-height:560px){
+@media (min-width:700px) and (max-height:700px){
   :root{--gap:14px}
   body{padding-top:max(8px,env(safe-area-inset-top))}
   main{row-gap:8px}
@@ -331,6 +369,7 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
   </header>
   <div class="col a">
   <section class="hero">
+    <div class="horizon" aria-hidden="true"><i class="sun"></i><i class="line"></i></div>
     <div class="kicker">Sober for</div>
     <div class="count">
       <div class="days" id="days">0</div>
@@ -377,7 +416,16 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
       <div class="stat money"><span class="k">Money saved</span><b id="money">$0</b><small id="moneySub"></small></div>
       <div class="stat"><span class="k">Calories avoided</span><b id="kcal">0</b><small id="kcalSub"></small></div>
     </div>
+    <p class="equiv" id="equiv"></p>
     <button class="btn quiet" id="setupSavings">Set up savings calculator</button>
+  </section>
+
+  <section class="sec tod">
+    <div class="ms-head"><div class="label">Around now</div><div class="meta" id="todMeta"></div></div>
+    <p class="t" id="todText"></p>
+    <details class="src"><summary>Sources and a note</summary>
+      <p>General information from public sources, not medical advice. Everyone's body and history are different. <a href="https://pubmed.ncbi.nlm.nih.gov/29730627/" target="_blank" rel="noopener">BMJ Open, 2018: one month without alcohol</a>. <a href="https://neuro.psychiatryonline.org/doi/10.1176/appi.neuropsych.16110307" target="_blank" rel="noopener">Sleep recovery in early abstinence</a>. If you drank heavily, stopping suddenly can be dangerous, so talk to a clinician about any severe symptoms.</p>
+    </details>
   </section>
 
   <section class="sec mil">
@@ -392,6 +440,17 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
   </footer>
   </div>
 </main>
+
+<dialog class="cele" id="cele" aria-labelledby="celeTitle">
+  <div class="cele-card">
+    <div class="cele-art" aria-hidden="true"><svg viewBox="0 0 132 84"><g class="cele-sun"><path d="M26 66a40 40 0 0 1 80 0Z" fill="#dde8ff"/></g><path d="M6 66h120" stroke="#8ddcc5" stroke-width="3" stroke-linecap="round"/></svg></div>
+    <div class="label">Milestone reached</div>
+    <h2 id="celeTitle"></h2>
+    <p id="celeText"></p>
+    <div class="stat-line" id="celeStat"></div>
+    <button class="btn primary" id="celeBtn" type="button">Keep going</button>
+  </div>
+</dialog>
 
 <dialog id="dlg">
   <form method="dialog" id="form" novalidate>
@@ -577,7 +636,7 @@ function streakDays(st,now){
 }
 const fmtLen=d=>{const n=Math.floor(d);return `${n.toLocaleString()} ${n===1?'day':'days'}`};
 // Write to the DOM only when a value changed, so scrolling is never interrupted by needless repaints.
-const setT=(id,v)=>{const e=$(id);v=String(v);if(e._t!==v){e._t=v;e.textContent=v}};
+const setT=(id,v)=>{const e=$(id);v=String(v);if(e._t!==v){e._t=v;e.textContent=v;return true}return false};
 const setA=(e,k,v)=>{v=String(v);if(e['_a'+k]!==v){e['_a'+k]=v;e.setAttribute(k,v)}};
 const setS=(e,k,v)=>{v=String(v);if(e['_s'+k]!==v){e['_s'+k]=v;e.style.setProperty(k,v)}};
 function renderStreaks(now){
@@ -601,15 +660,106 @@ function renderSavings(total){
   if(!daily&&!kcalDaily){
     setT('money',usd0.format(0));setT('kcal','0');
     setT('moneySub','Not set up yet');setT('kcalSub','');
-    setT('perDay','');$('setupSavings').hidden=false;return;
+    setT('perDay','');setT('equiv','');if($('setupSavings').hidden)$('setupSavings').hidden=false;return;
   }
-  $('setupSavings').hidden=true; // once set up, edit it from Settings
+  if(!$('setupSavings').hidden)$('setupSavings').hidden=true; // once set up, edit it from Settings
   setT('money',usd.format(daily*total));
   setT('moneySub',daily?`${usd.format(daily)}/day · ${usd0.format(daily*30.4)}/mo`:'');
   setT('kcal',Math.round(kcalDaily*total).toLocaleString());
   setT('kcalSub',kcalDaily?`${Math.round(kcalDaily).toLocaleString()}/day`:'');
   setT('perDay',daily?`${usd0.format(daily*365)}/yr pace`:'');
+  setT('equiv',daily?equivText(daily*total):'');
 }
+
+
+// ---- flair: living horizon (sky follows local time of day)
+const lerp=(a,b,t)=>a+(b-a)*t;
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mix=(c1,c2,t)=>'#'+hex(c1).map((v,i)=>Math.round(lerp(v,hex(c2)[i],t)).toString(16).padStart(2,'0')).join('');
+// [hour, sky top, sky bottom, sun colour, sun opacity]
+const SKY=[[0,'#0a1226','#070d1c','#cfd9f0',.16],[5,'#122344','#0a1528','#cfd9f0',.16],[6.5,'#2a4678','#1b2b52','#f3c9a0',.32],
+  [9,'#1e4280','#132a52','#e8f0ff',.26],[12.5,'#1e4a8c','#112b55','#f0f5ff',.24],[16.5,'#1f4580','#132a52','#e8f0ff',.26],
+  [18.5,'#2b3f72','#1c2a50','#f3b98a',.32],[20,'#14264a','#0b172f','#cfd9f0',.18],[24,'#0a1226','#070d1c','#cfd9f0',.16]];
+function updateHorizon(){
+  const d=new Date(),h=d.getHours()+d.getMinutes()/60;
+  let i=0;while(i<SKY.length-2&&h>=SKY[i+1][0])i++;
+  const a=SKY[i],b=SKY[i+1],t=(h-a[0])/(b[0]-a[0]);
+  const el=document.querySelector('.horizon');
+  setS(el,'--sky-a',mix(a[1],b[1],t));setS(el,'--sky-b',mix(a[2],b[2],t));
+  setS(el,'--sun-c',mix(a[3],b[3],t));setS(el,'--so',lerp(a[4],b[4],t).toFixed(2));
+  // sun travels 6:00 to 18:00; the rest of the day a pale moon rests high on the right
+  let sx,sy;
+  if(h>=6&&h<=18){const x=(h-6)/12;sx=.14+.72*x;sy=.34-.2*Math.sin(Math.PI*x)}else{sx=.84;sy=.16}
+  setS(el,'--sx',sx.toFixed(3));setS(el,'--sy',sy.toFixed(3));
+}
+
+// ---- flair: odometer count-up on open, soft slide on the clock
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let dayAnim=false,daysShown=false;
+function countUp(el,to,ms){
+  const final=to.toLocaleString();el.textContent=final;
+  el.style.minWidth=el.offsetWidth+'px';el.style.textAlign='right';dayAnim=true;
+  const t0=performance.now();
+  (function step(t){
+    const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);
+    el.textContent=Math.round(to*e).toLocaleString();
+    if(k<1)requestAnimationFrame(step);
+    else{el.textContent=final;el._t=final;el.style.minWidth='';el.style.textAlign='';dayAnim=false}
+  })(t0);
+}
+function slide(id){
+  if(reduced)return;
+  $(id).animate([{transform:'translateY(.3em)',opacity:.2},{transform:'none',opacity:1}],{duration:300,easing:'cubic-bezier(.2,.7,.2,1)'});
+}
+
+// ---- flair: what research says about around now
+const TIPS=[
+  [0,2,'The first days are often the hardest on the body. Sleep, appetite and mood can all feel off. Go easy, drink water and eat regularly. If you were drinking heavily and have shakes, confusion or severe symptoms, get medical help.'],
+  [3,13,'Early sleep is often rough: lighter, broken or full of vivid dreams. That is common, and it usually eases, though it can take weeks to settle.'],
+  [14,29,'Around two to three weeks, some people notice unusually vivid dreams as the sleep cycle rebalances (a REM rebound). It is a normal part of readjusting.'],
+  [30,89,'In a 2018 study of healthy drinkers who stopped for a month, average blood pressure dropped about 6%, weight about 1.5% and insulin resistance about 26%. It was observational and results vary.'],
+  [90,364,'Sleep can take months to fully settle for some people, so a bad night now and then is not a step backward. Keep the routines that are working.'],
+  [365,1e9,'A year or more in. The routines you built are doing the work now. Keep noticing how you feel, and keep your support close.']
+];
+function renderTod(td){
+  const t=TIPS.find(x=>td>=x[0]&&td<=x[1])||TIPS[0];
+  setT('todMeta',`${td.toLocaleString()} ${td===1?'day':'days'} in`);setT('todText',t[2]);
+}
+// ---- flair: savings as real things
+const THINGS=[[6,'coffee','coffees'],[18,'lunch out','lunches out'],[35,'movie night','movie nights'],[80,'dinner out','dinners out'],
+  [120,'concert ticket','concert tickets'],[600,'weekend away','weekends away'],[2500,'week of vacation','weeks of vacation']];
+function equivText(saved){
+  let pick=null;
+  for(const t of THINGS)if(Math.floor(saved/t[0])>=3)pick=t;
+  if(!pick)return '';
+  const n=Math.floor(saved/pick[0]);
+  return `That is about ${n.toLocaleString()} ${n===1?pick[1]:pick[2]}.`;
+}
+
+// ---- flair: milestone moment (shown once per milestone)
+const CELE={ '1 day':'Day one is done. Starting is the hardest part.','1 week':'A full week of choosing this.','2 weeks':'Two weeks of showing up.',
+  '30 days':'A month. You did it one day at a time.','60 days':'Two months, steady.','90 days':'Ninety days. Three months of choosing this.',
+  '6 months':'Half a year. That is a real change.','9 months':'Nine months of building a different life.','1 year':'A full year. Look how far you have come.',
+  '18 months':'A year and a half, still steady.','2 years':'Two years. This is who you are now.','3 years':'Three years of steady days.',
+  '5 years':'Five years. Remarkable.','10 years':'Ten years. A whole new chapter.'};
+const celeKey=m=>cur().s+'|'+m.n;
+function reachedList(now){return MILESTONES.map(m=>({...m,at:m.f(start)})).filter(m=>m.at<=now)}
+function silentInitCele(now){state.cel=reachedList(now||new Date()).map(celeKey);save()}
+function checkCele(now){
+  if(!Array.isArray(state.cel)){silentInitCele(now);return}
+  if(document.hidden||$('cele').open||$('dlg').open||$('rdlg').open)return;
+  const fresh=reachedList(now).filter(m=>!state.cel.includes(celeKey(m)));
+  if(!fresh.length)return;
+  const m=fresh[fresh.length-1];
+  state.cel.push(...fresh.map(celeKey));save();
+  setT('celeTitle',m.n);setT('celeText',CELE[m.n]||'Another milestone.');
+  const total=state.streaks.reduce((a,st)=>a+streakDays(st,now),0);
+  const parts=[];if(state.daily)parts.push(usd0.format(state.daily*total)+' saved');if(state.kcalDaily)parts.push(Math.round(state.kcalDaily*total).toLocaleString()+' calories avoided');
+  $('celeStat').textContent=parts.join(' · ');
+  $('cele').showModal();$('celeBtn').focus({preventScroll:true});
+}
+$('celeBtn').onclick=()=>$('cele').close();
+$('cele').addEventListener('click',e=>{if(e.target===$('cele'))$('cele').close()});
 
 let lastDays=-1;
 function tick(){
@@ -618,10 +768,13 @@ function tick(){
   if(now<start){setT('days','0');return}
   const b=breakdown(start,now);
   const td=Math.floor((now-start)/DAY);
-  setT('days',td.toLocaleString());setA($('days'),'data-len',String(td).length);
+  setA($('days'),'data-len',String(td).length);
+  if(!daysShown){daysShown=true;if(!reduced&&td>0&&!document.hidden)countUp($('days'),td,1100);else setT('days',td.toLocaleString())}
+  else if(!dayAnim)setT('days',td.toLocaleString());
   setT('dayWord',td===1?'day':'days');
   setT('y',b.y);setT('m',b.m);setT('d',b.d);
-  setT('h',pad(b.h));setT('mi',pad(b.mi));setT('s',pad(b.s));
+  if(setT('h',pad(b.h)))slide('h');if(setT('mi',pad(b.mi)))slide('mi');if(setT('s',pad(b.s)))slide('s');
+  renderTod(td);
   setT('since','Since '+start.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'}));
 
   const list=MILESTONES.map(m=>({...m,at:m.f(start)}));
@@ -639,6 +792,7 @@ function tick(){
     setT('nextName','Beyond milestones');setT('nextSub','Every day counts.');
   }
   if(td!==lastDays){lastDays=td;buildMilestones(now)}
+  checkCele(now);
 }
 
 // ---- calculator
@@ -712,12 +866,13 @@ function saveDate(){
   // keep the existing time of day if the date didn't change, otherwise start at midnight
   const v=`${$('date').value}T${$('date').value===orig.slice(0,10)?orig.slice(11):'00:00'}`;
   const d=new Date(v);
+  const dateChanged=!isNaN(d)&&cur().s!==v;
   if(!isNaN(d)){
     cur().s=v;start=d;
     const prev=state.streaks[state.streaks.length-2];
     if(prev&&prev.e&&new Date(prev.e)>d)prev.e=v;
   }
-  persistCalc();lastDays=-1;tick();
+  persistCalc();if(dateChanged)silentInitCele(new Date());lastDays=-1;tick();
 }
 // Save is the default submit button, so Enter / Go on the keyboard saves instead of cancelling
 $('form').addEventListener('submit',e=>{e.preventDefault();saveDate();$('dlg').close()});
@@ -741,7 +896,8 @@ function sanitize(o){
   const calc={};
   for(const k of ['mode','preset','where','dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'])if(c[k]!==undefined)calc[k]=String(c[k]);
   if(!['drinks','spend','direct'].includes(calc.mode))calc.mode='drinks';
-  return {streaks,calc,daily:num(o.daily),kcalDaily:num(o.kcalDaily)};
+  const cel=Array.isArray(o.cel)?o.cel.filter(x=>typeof x==='string').slice(0,500):undefined;
+  return {streaks,calc,daily:num(o.daily),kcalDaily:num(o.kcalDaily),cel};
 }
 async function doBackup(){
   const data=JSON.stringify({app:'steady',version:2,exported:new Date().toISOString(),...state},null,2);
@@ -793,9 +949,10 @@ $('rform').addEventListener('submit',e=>{
   const prevStart=new Date(cur().s);
   cur().e=toISO(d<prevStart?prevStart:d);
   state.streaks.push({s:v,e:null});
-  start=d;save();lastDays=-1;tick();
+  start=d;save();silentInitCele(new Date());lastDays=-1;tick();
 });
 
+updateHorizon();setInterval(updateHorizon,60000);
 tick();setInterval(tick,1000);
 document.addEventListener('visibilitychange',tick);
 

@@ -181,7 +181,11 @@ input,select{width:100%;min-width:0;font:400 16px/1.2 var(--sans);color:var(--te
 input:hover,select:hover{border-color:rgba(150,180,235,.4)}
 input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:0;border-color:transparent}
 input::placeholder{color:#6f81a1}
-input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block}
+input[type=date]{-webkit-appearance:none;appearance:none;display:flex;align-items:center;text-align:left;line-height:normal;min-height:46px}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.2em;display:flex;align-items:center}
+input[type=date]::-webkit-datetime-edit{padding:0;display:flex;align-items:center;flex:1}
+input[type=date]::-webkit-datetime-edit-fields-wrapper{padding:0}
+input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 select{-webkit-appearance:none;appearance:none;padding-right:34px;text-overflow:ellipsis;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%239dadc8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center}
@@ -392,10 +396,7 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
   <form method="dialog" id="form" novalidate>
     <h3 id="settingsTitle" tabindex="-1">Settings</h3>
     <label for="date">Current streak start</label>
-    <div class="two when">
-      <input type="date" id="date" required aria-label="Start date">
-      <input type="time" id="time" value="00:00" aria-label="Start time">
-    </div>
+    <input type="date" id="date" required aria-label="Start date">
 
     <hr>
     <h3 class="sub">Savings calculator</h3>
@@ -480,10 +481,7 @@ hr{border:0;border-top:1px solid var(--line);margin:22px -20px 20px;scroll-margi
     <h3 id="resetTitle" tabindex="-1">Reset streak</h3>
     <p class="note" id="rnote"></p>
     <label for="rdate">New streak starts</label>
-    <div class="two when">
-      <input type="date" id="rdate" required aria-label="New start date">
-      <input type="time" id="rtime" required aria-label="New start time">
-    </div>
+    <input type="date" id="rdate" required aria-label="New start date">
     <div class="row">
       <button type="button" class="btn" id="rcancel">Cancel</button>
       <button type="submit" class="btn danger">Reset</button>
@@ -682,7 +680,7 @@ $('preset').onchange=applyPreset;$('where').onchange=applyPreset;
 
 function openSettings(tab){
   const d=start;
-  $('date').value=toISO(d).slice(0,10);$('time').value=toISO(d).slice(11);
+  $('date').value=toISO(d).slice(0,10);
   const c=state.calc||{};
   $('dpw').value=c.dpw??'';$('price').value=c.price??'';$('kcalDrink').value=c.kcalDrink??'';
   $('spend').value=c.spend??'';$('per').value=c.per||'week';$('kcalSpend').value=c.kcalSpend??'';
@@ -709,7 +707,9 @@ function persistCalc(){
 document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',persistCalc));
 
 function saveDate(){
-  const v=`${$('date').value}T${$('time').value||'00:00'}`;
+  const orig=toISO(start);
+  // keep the existing time of day if the date didn't change, otherwise start at midnight
+  const v=`${$('date').value}T${$('date').value===orig.slice(0,10)?orig.slice(11):'00:00'}`;
   const d=new Date(v);
   if(!isNaN(d)){
     cur().s=v;start=d;
@@ -779,13 +779,15 @@ $('bkFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)doRest
 $('resetBtn').onclick=()=>{
   const now=new Date(),n=Math.floor(streakDays(cur(),now));
   $('rnote').textContent=`Your ${n.toLocaleString()}-day streak is saved to history and counts toward your total and best streak. Start again whenever you're ready.`;
-  $('rdate').value=toISO(now).slice(0,10);$('rtime').value=toISO(now).slice(11);
+  $('rdate').value=toISO(now).slice(0,10);
   $('dlg').close();$('rdlg').showModal();$('resetTitle').focus({preventScroll:true});
 };
 $('rcancel').onclick=()=>$('rdlg').close();
 $('rform').addEventListener('submit',e=>{
   e.preventDefault();$('rdlg').close();
-  const v=`${$('rdate').value}T${$('rtime').value||'00:00'}`;
+  const nowISO=toISO(new Date());
+  // starting today counts from right now, any other date from midnight
+  const v=`${$('rdate').value}T${$('rdate').value===nowISO.slice(0,10)?nowISO.slice(11):'00:00'}`;
   const d=new Date(v);if(isNaN(d))return;
   const prevStart=new Date(cur().s);
   cur().e=toISO(d<prevStart?prevStart:d);

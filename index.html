@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steady — Sobriety Tracker</title>
+<meta name="theme-color" content="#0a1730">
+<meta name="description" content="A calm, private sobriety counter.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Steady">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* coss-ui-style tokens: neutral surfaces, 1px hairline borders, soft radii, subtle ring focus */
+:root{
+  --background:#0a1730;
+  --foreground:#e8eefb;
+  --card:#0f2142;
+  --card-foreground:#e8eefb;
+  --muted:#13294f;
+  --muted-foreground:#8da2c8;
+  --border:#1f3869;
+  --input:#1f3869;
+  --primary:#6ea8ff;
+  --primary-foreground:#06142e;
+  --accent:#f2c66d;          /* warm amber accent */
+  --accent-2:#5eead4;        /* teal accent */
+  --ring:rgba(110,168,255,.45);
+  --radius:14px;
+  --font-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --font-body:'Geist',system-ui,-apple-system,sans-serif;
+  --font-mono:'Geist Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{
+  background:
+    radial-gradient(900px 500px at 50% -10%,#173a78 0%,transparent 60%),
+    radial-gradient(600px 400px at 100% 100%,#0d2a5c 0%,transparent 60%),
+    var(--background);
+  background-attachment:fixed;
+  color:var(--foreground);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  padding:max(20px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom));
+}
+main{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand i{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.btn{font:500 13px var(--font-body);color:var(--foreground);background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;cursor:pointer}
+.btn:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
+.btn.primary{background:var(--primary);color:var(--primary-foreground);border-color:transparent;font-weight:600}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent),var(--card);
+  border:1px solid var(--border);border-radius:var(--radius);padding:20px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 12px 32px -16px rgba(0,0,0,.6)}
+.eyebrow{font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground)}
+/* hero */
+.hero{text-align:center;padding:28px 20px 22px}
+.days{font-family:var(--font-display);font-weight:700;font-size:clamp(88px,30vw,132px);line-height:.95;letter-spacing:-.04em;
+  background:linear-gradient(180deg,#fff 10%,#9cc2ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  font-variant-numeric:tabular-nums;margin-top:10px}
+.days-label{font-family:var(--font-display);font-size:20px;color:var(--accent);margin-top:2px}
+.since{color:var(--muted-foreground);font-size:13px;margin-top:10px}
+.units{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.unit{background:var(--muted);border:1px solid var(--border);border-radius:12px;padding:12px 4px}
+.unit b{display:block;font:500 26px var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.unit span{font-size:11px;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:.1em}
+.live{display:flex;justify-content:center;gap:6px;margin-top:16px;font:400 15px var(--font-mono);color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.live em{font-style:normal;color:var(--foreground)}
+/* next milestone */
+.next{display:flex;align-items:center;gap:18px}
+.ring{position:relative;width:96px;height:96px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .pct{position:absolute;inset:0;display:grid;place-items:center;font:500 18px var(--font-mono)}
+.next h2{font-family:var(--font-display);font-size:24px;letter-spacing:-.02em;margin:4px 0}
+.next p{color:var(--muted-foreground);font-size:13px;line-height:1.4}
+/* milestones */
+.ms-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.ms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ms{border:1px solid var(--border);background:var(--muted);border-radius:12px;padding:12px 8px;text-align:center;opacity:.5}
+.ms.done{opacity:1;border-color:#3a5fa3;background:linear-gradient(180deg,rgba(110,168,255,.16),rgba(110,168,255,.04))}
+.ms .gem{font-size:20px;display:block;margin-bottom:4px;filter:grayscale(1)}
+.ms.done .gem{filter:none}
+.ms b{font:600 13px var(--font-display);display:block}
+.ms small{font-size:11px;color:var(--muted-foreground)}
+/* dialog */
+dialog{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--foreground);
+  padding:22px;width:min(92vw,400px);margin:auto}
+dialog::backdrop{background:rgba(3,9,22,.7);backdrop-filter:blur(4px)}
+dialog h3{font-family:var(--font-display);font-size:20px;margin-bottom:14px}
+label{display:block;font-size:12px;color:var(--muted-foreground);margin:12px 0 6px}
+input{width:100%;font:400 15px var(--font-body);color:var(--foreground);background:var(--muted);border:1px solid var(--input);border-radius:10px;padding:10px 12px;color-scheme:dark}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+footer{text-align:center;font-size:12px;color:var(--muted-foreground);padding:6px}
+@media (prefers-reduced-motion:no-preference){.card{animation:rise .5s ease both}.card:nth-of-type(2){animation-delay:.08s}.card:nth-of-type(3){animation-delay:.16s}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><i></i>Steady</div>
+    <button class="btn" id="edit">Settings</button>
+  </header>
+
+  <section class="card hero">
+    <div class="eyebrow">Days sober</div>
+    <div class="days" id="days">0</div>
+    <div class="days-label" id="dayWord">days</div>
+    <div class="units">
+      <div class="unit"><b id="y">0</b><span>Years</span></div>
+      <div class="unit"><b id="m">0</b><span>Months</span></div>
+      <div class="unit"><b id="d">0</b><span>Days</span></div>
+    </div>
+    <div class="live"><em id="h">00</em>h <em id="mi">00</em>m <em id="s">00</em>s</div>
+    <div class="since" id="since"></div>
+  </section>
+
+  <section class="card next">
+    <div class="ring">
+      <svg width="96" height="96" viewBox="0 0 96 96">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="#1f3869" stroke-width="8"/>
+        <circle id="arc" cx="48" cy="48" r="40" fill="none" stroke="url(#g)" stroke-width="8" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ea8ff"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+      </svg>
+      <div class="pct" id="pct">0%</div>
+    </div>
+    <div>
+      <div class="eyebrow">Next milestone</div>
+      <h2 id="nextName">—</h2>
+      <p id="nextSub"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="ms-head"><div class="eyebrow">Milestones</div><div class="eyebrow" id="msCount"></div></div>
+    <div class="ms-grid" id="ms"></div>
+  </section>
+
+  <footer>Private. Stored only on this device.</footer>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h3>Your sobriety date</h3>
+    <label for="date">Start date (day one)</label>
+    <input type="date" id="date" required>
+    <label for="time">Start time (optional)</label>
+    <input type="time" id="time" value="00:00">
+    <div class="row">
+      <button class="btn" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" id="save" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const KEY='steady.start';
+const DEFAULT_START='2026-11-08T00:00';
+const $=id=>document.getElementById(id);
+const store={
+  get(){try{return localStorage.getItem(KEY)}catch{return null}},
+  set(v){try{localStorage.setItem(KEY,v)}catch{}}
+};
+let start=new Date(store.get()||DEFAULT_START);
+if(isNaN(start))start=new Date(DEFAULT_START);
+
+const addMonths=(d,n)=>{const r=new Date(d);const day=r.getDate();r.setDate(1);r.setMonth(r.getMonth()+n);
+  const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(day,last));return r};
+const addDays=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
+
+const MILESTONES=[
+  {n:'1 day',e:'🌱',f:s=>addDays(s,1)},
+  {n:'1 week',e:'🌿',f:s=>addDays(s,7)},
+  {n:'2 weeks',e:'🍃',f:s=>addDays(s,14)},
+  {n:'30 days',e:'🌙',f:s=>addDays(s,30)},
+  {n:'60 days',e:'⭐',f:s=>addDays(s,60)},
+  {n:'90 days',e:'🔥',f:s=>addDays(s,90)},
+  {n:'6 months',e:'🌊',f:s=>addMonths(s,6)},
+  {n:'9 months',e:'🏔️',f:s=>addMonths(s,9)},
+  {n:'1 year',e:'🏆',f:s=>addMonths(s,12)},
+  {n:'18 months',e:'💎',f:s=>addMonths(s,18)},
+  {n:'2 years',e:'👑',f:s=>addMonths(s,24)},
+  {n:'3 years',e:'🌟',f:s=>addMonths(s,36)},
+  {n:'5 years',e:'🪐',f:s=>addMonths(s,60)},
+  {n:'10 years',e:'☀️',f:s=>addMonths(s,120)},
+];
+
+function breakdown(from,to){
+  let y=to.getFullYear()-from.getFullYear();
+  let cur=addMonths(from,y*12);
+  if(cur>to){y--;cur=addMonths(from,y*12)}
+  let m=0;
+  while(addMonths(from,y*12+m+1)<=to)m++;
+  cur=addMonths(from,y*12+m);
+  let ms=to-cur;
+  const d=Math.floor(ms/864e5);ms-=d*864e5;
+  const h=Math.floor(ms/36e5);ms-=h*36e5;
+  const mi=Math.floor(ms/6e4);ms-=mi*6e4;
+  const s=Math.floor(ms/1e3);
+  return {y,m,d,h,mi,s};
+}
+const pad=n=>String(n).padStart(2,'0');
+const fmtDate=d=>d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+
+function buildMilestones(now){
+  const list=MILESTONES.map(m=>({...m,at:m.f(start)}));
+  const done=list.filter(m=>m.at<=now);
+  $('ms').innerHTML=list.slice(0,9).map(m=>`<div class="ms ${m.at<=now?'done':''}"><span class="gem">${m.e}</span><b>${m.n}</b><small>${m.at<=now?fmtDate(m.at):'Upcoming'}</small></div>`).join('');
+  $('msCount').textContent=`${done.length} / ${list.length}`;
+}
+
+let lastDays=-1;
+function tick(){
+  const now=new Date();
+  if(now<start){$('days').textContent='0';return}
+  const b=breakdown(start,now);
+  const total=Math.floor((now-start)/864e5);
+  $('days').textContent=total.toLocaleString();
+  $('dayWord').textContent=total===1?'day':'days';
+  $('y').textContent=b.y;$('m').textContent=b.m;$('d').textContent=b.d;
+  $('h').textContent=pad(b.h);$('mi').textContent=pad(b.mi);$('s').textContent=pad(b.s);
+  $('since').textContent='Since '+start.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  const list=MILESTONES.map(m=>({...m,at:m.f(start)}));
+  const idx=list.findIndex(m=>m.at>now);
+  const next=idx===-1?null:list[idx];
+  if(next){
+    const prevAt=start;
+    const p=Math.min(1,Math.max(0,(now-prevAt)/(next.at-prevAt)));
+    $('arc').style.strokeDashoffset=251.3*(1-p);
+    $('pct').textContent=Math.floor(p*100)+'%';
+    $('nextName').textContent=next.n;
+    const left=Math.ceil((next.at-now)/864e5);
+    $('nextSub').textContent=`${left} ${left===1?'day':'days'} to go · ${fmtDate(next.at)}`;
+  }else{
+    $('arc').style.strokeDashoffset=0;$('pct').textContent='∞';
+    $('nextName').textContent='Beyond milestones';$('nextSub').textContent='Every day counts.';
+  }
+  if(total!==lastDays){lastDays=total;buildMilestones(now)}
+}
+
+// settings
+const dlg=$('dlg');
+$('edit').onclick=()=>{
+  const p=n=>String(n).padStart(2,'0');
+  $('date').value=`${start.getFullYear()}-${p(start.getMonth()+1)}-${p(start.getDate())}`;
+  $('time').value=`${p(start.getHours())}:${p(start.getMinutes())}`;
+  dlg.showModal();
+};
+$('form').addEventListener('submit',e=>{
+  if(e.submitter&&e.submitter.value==='save'){
+    const v=`${$('date').value}T${$('time').value||'00:00'}`;
+    const d=new Date(v);
+    if(!isNaN(d)){start=d;store.set(v);lastDays=-1;tick()}
+  }
+});
+
+tick();setInterval(tick,1000);
+document.addEventListener('visibilitychange',tick);
+
+if('serviceWorker' in navigator){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>

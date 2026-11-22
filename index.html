@@ -91,6 +91,32 @@ header{display:flex;justify-content:space-between;align-items:center;padding:4px
 .ms.done .gem{filter:none}
 .ms b{font:600 13px var(--font-display);display:block}
 .ms small{font-size:11px;color:var(--muted-foreground)}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.stat{background:var(--muted);border:1px solid var(--border);border-radius:12px;padding:14px}
+.stat b{display:block;font:600 24px var(--font-display);letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.stat.money b{color:var(--accent-2)}
+.stat small{display:block;color:var(--muted-foreground);font-size:12px;margin-top:2px}
+.cta{width:100%;margin-top:14px;padding:12px}
+.hist{list-style:none;padding:0;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.hist li{display:flex;justify-content:space-between;gap:10px;background:var(--muted);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px}
+.hist li span:last-child{font:500 13px var(--font-mono);color:var(--muted-foreground)}
+.hist li.cur span:last-child{color:var(--accent)}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.trio .stat{padding:10px;text-align:center}
+.trio .stat b{font-size:20px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--muted);border:1px solid var(--border);border-radius:10px;padding:3px;margin:6px 0 4px}
+.tabs button{font:500 12px var(--font-body);color:var(--muted-foreground);background:none;border:0;border-radius:8px;padding:8px 4px;cursor:pointer}
+.tabs button.on{background:var(--primary);color:var(--primary-foreground);font-weight:600}
+.pane{display:none}.pane.on{display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+select{width:100%;font:400 15px var(--font-body);color:var(--foreground);background:var(--muted);border:1px solid var(--input);border-radius:10px;padding:10px 12px;color-scheme:dark}
+.preview{margin-top:14px;padding:12px;border-radius:10px;border:1px dashed var(--border);font-size:13px;color:var(--muted-foreground);line-height:1.5}
+.preview b{color:var(--accent-2);font-family:var(--font-mono);font-weight:500}
+hr{border:0;border-top:1px solid var(--border);margin:20px 0 4px}
+.btn.danger{color:#ffb4b4;border-color:#5a2b3a;background:rgba(255,120,120,.08)}
+.note{font-size:13px;color:var(--muted-foreground);line-height:1.5}
+dialog{max-height:90vh;overflow:auto}
 /* dialog */
 dialog{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--foreground);
   padding:22px;width:min(92vw,400px);margin:auto}
@@ -145,33 +171,133 @@ footer{text-align:center;font-size:12px;color:var(--muted-foreground);padding:6p
     <div class="ms-grid" id="ms"></div>
   </section>
 
+
+  <section class="card">
+    <div class="ms-head"><div class="eyebrow">Savings</div><div class="eyebrow" id="perDay"></div></div>
+    <div class="stats" id="statsWrap">
+      <div class="stat money"><span class="eyebrow">Money saved</span><b id="money">$0</b><small id="moneySub"></small></div>
+      <div class="stat"><span class="eyebrow">Calories avoided</span><b id="kcal">0</b><small id="kcalSub"></small></div>
+    </div>
+    <button class="btn cta" id="setupSavings">Set up savings calculator</button>
+  </section>
+
+  <section class="card">
+    <div class="ms-head"><div class="eyebrow">Streaks</div><div class="eyebrow" id="resetCount"></div></div>
+    <div class="trio">
+      <div class="stat"><span class="eyebrow">Current</span><b id="curDays">0</b></div>
+      <div class="stat"><span class="eyebrow">Best</span><b id="bestDays">0</b></div>
+      <div class="stat"><span class="eyebrow">Total</span><b id="totDays">0</b></div>
+    </div>
+    <ul class="hist" id="hist"></ul>
+  </section>
+
   <footer>Private. Stored only on this device.</footer>
 </main>
 
 <dialog id="dlg">
   <form method="dialog" id="form">
-    <h3>Your sobriety date</h3>
-    <label for="date">Start date (day one)</label>
-    <input type="date" id="date" required>
-    <label for="time">Start time (optional)</label>
-    <input type="time" id="time" value="00:00">
+    <h3>Settings</h3>
+    <label for="date">Current streak start</label>
+    <div class="two">
+      <input type="date" id="date" required>
+      <input type="time" id="time" value="00:00">
+    </div>
+
+    <hr>
+    <h3 style="margin-top:16px">Savings calculator</h3>
+    <div class="tabs" id="tabs">
+      <button type="button" data-m="drinks" class="on">Drinks</button>
+      <button type="button" data-m="spend">Spend</button>
+      <button type="button" data-m="direct">Direct</button>
+    </div>
+
+    <div class="pane on" data-pane="drinks">
+      <label for="preset">Typical drink</label>
+      <select id="preset">
+        <option value="">Custom</option>
+        <option value="beer">Beer (12 oz)</option>
+        <option value="craft">Craft beer / IPA (16 oz)</option>
+        <option value="wine">Wine (5 oz glass)</option>
+        <option value="cocktail">Cocktail</option>
+        <option value="shot">Liquor shot / mixed drink</option>
+      </select>
+      <div class="two">
+        <div><label for="dpw">Drinks per week</label><input type="number" id="dpw" inputmode="decimal" min="0" step="any" placeholder="e.g. 20"></div>
+        <div><label for="price">Avg price per drink ($)</label><input type="number" id="price" inputmode="decimal" min="0" step="any" placeholder="e.g. 8"></div>
+      </div>
+      <label for="kcalDrink">Calories per drink</label>
+      <input type="number" id="kcalDrink" inputmode="decimal" min="0" step="any" placeholder="e.g. 150">
+    </div>
+
+    <div class="pane" data-pane="spend">
+      <div class="two">
+        <div><label for="spend">Amount spent ($)</label><input type="number" id="spend" inputmode="decimal" min="0" step="any" placeholder="e.g. 150"></div>
+        <div><label for="per">Per</label><select id="per"><option value="week">Week</option><option value="month">Month</option></select></div>
+      </div>
+      <label for="kcalSpend">Calories per day avoided (optional)</label>
+      <input type="number" id="kcalSpend" inputmode="decimal" min="0" step="any" placeholder="e.g. 500">
+    </div>
+
+    <div class="pane" data-pane="direct">
+      <div class="two">
+        <div><label for="dMoney">Money saved per day ($)</label><input type="number" id="dMoney" inputmode="decimal" min="0" step="any" placeholder="e.g. 25"></div>
+        <div><label for="dKcal">Calories per day</label><input type="number" id="dKcal" inputmode="decimal" min="0" step="any" placeholder="e.g. 500"></div>
+      </div>
+    </div>
+
+    <div class="preview" id="preview">Enter your numbers to see an estimate.</div>
+
+    <hr>
+    <p class="note" style="margin-top:14px">Had a slip? Your streak is saved to history and you start again. It doesn't erase the days you've put together.</p>
+    <button type="button" class="btn danger cta" id="resetBtn">Reset streak…</button>
+
     <div class="row">
       <button class="btn" value="cancel" formnovalidate>Cancel</button>
-      <button class="btn primary" id="save" value="save">Save</button>
+      <button class="btn primary" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="rdlg">
+  <form method="dialog" id="rform">
+    <h3>Reset streak</h3>
+    <p class="note" id="rnote"></p>
+    <label for="rdate">New streak starts</label>
+    <div class="two">
+      <input type="date" id="rdate" required>
+      <input type="time" id="rtime" required>
+    </div>
+    <div class="row">
+      <button class="btn" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn danger" value="reset">Reset</button>
     </div>
   </form>
 </dialog>
 
 <script>
-const KEY='steady.start';
+const KEY='steady.v2',OLD='steady.start';
 const DEFAULT_START='2026-11-08T00:00';
 const $=id=>document.getElementById(id);
 const store={
-  get(){try{return localStorage.getItem(KEY)}catch{return null}},
-  set(v){try{localStorage.setItem(KEY,v)}catch{}}
+  get(k){try{return localStorage.getItem(k)}catch{return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch{}}
 };
-let start=new Date(store.get()||DEFAULT_START);
-if(isNaN(start))start=new Date(DEFAULT_START);
+const toISO=d=>{const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
+
+function load(){
+  try{const r=store.get(KEY);if(r){const o=JSON.parse(r);if(o&&o.streaks&&o.streaks.length)return o}}catch{}
+  const legacy=store.get(OLD)||DEFAULT_START;
+  return {streaks:[{s:legacy,e:null}],calc:{mode:'drinks'},daily:0,kcalDaily:0};
+}
+let state=load();
+const save=()=>store.set(KEY,JSON.stringify(state));
+const cur=()=>state.streaks[state.streaks.length-1];
+const startDate=()=>{const d=new Date(cur().s);return isNaN(d)?new Date(DEFAULT_START):d};
+let start=startDate();
+const usd=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+const usd0=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const num=v=>{const n=parseFloat(v);return isNaN(n)||n<0?0:n};
+const DAY=864e5;
 
 const addMonths=(d,n)=>{const r=new Date(d);const day=r.getDate();r.setDate(1);r.setMonth(r.getMonth()+n);
   const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(day,last));return r};
@@ -211,6 +337,7 @@ function breakdown(from,to){
 const pad=n=>String(n).padStart(2,'0');
 const fmtDate=d=>d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
 
+
 function buildMilestones(now){
   const list=MILESTONES.map(m=>({...m,at:m.f(start)}));
   const done=list.filter(m=>m.at<=now);
@@ -218,14 +345,51 @@ function buildMilestones(now){
   $('msCount').textContent=`${done.length} / ${list.length}`;
 }
 
+// ---- streaks & savings
+function streakDays(st,now){
+  const a=new Date(st.s),b=st.e?new Date(st.e):now;
+  return Math.max(0,(b-a)/DAY);
+}
+const fmtLen=d=>{const n=Math.floor(d);return `${n.toLocaleString()} ${n===1?'day':'days'}`};
+function renderStreaks(now){
+  const lens=state.streaks.map(st=>streakDays(st,now));
+  const total=lens.reduce((a,b)=>a+b,0);
+  $('curDays').textContent=Math.floor(lens[lens.length-1]).toLocaleString();
+  $('bestDays').textContent=Math.floor(Math.max(...lens)).toLocaleString();
+  $('totDays').textContent=Math.floor(total).toLocaleString();
+  const resets=state.streaks.length-1;
+  $('resetCount').textContent=resets?`${resets} ${resets===1?'reset':'resets'}`:'No resets';
+  const items=state.streaks.map((st,i)=>{
+    const a=new Date(st.s),isCur=!st.e;
+    return `<li class="${isCur?'cur':''}"><span>${fmtDate(a)} → ${isCur?'now':fmtDate(new Date(st.e))}</span><span>${fmtLen(lens[i])}</span></li>`;
+  }).reverse();
+  $('hist').innerHTML=items.join('');
+  return total;
+}
+function renderSavings(total){
+  const {daily,kcalDaily}=state;
+  if(!daily&&!kcalDaily){
+    $('money').textContent=usd0.format(0);$('kcal').textContent='0';
+    $('moneySub').textContent='Not set up yet';$('kcalSub').textContent='';
+    $('perDay').textContent='';$('setupSavings').textContent='Set up savings calculator';return;
+  }
+  $('setupSavings').textContent='Edit savings calculator';
+  $('money').textContent=usd.format(daily*total);
+  $('moneySub').textContent=daily?`${usd.format(daily)}/day · ${usd0.format(daily*30.4)}/mo`:'';
+  $('kcal').textContent=Math.round(kcalDaily*total).toLocaleString();
+  $('kcalSub').textContent=kcalDaily?`${Math.round(kcalDaily).toLocaleString()}/day`:'';
+  $('perDay').textContent=daily?`${usd0.format(daily*365)}/yr pace`:'';
+}
+
 let lastDays=-1;
 function tick(){
   const now=new Date();
+  const total=renderStreaks(now);renderSavings(total);
   if(now<start){$('days').textContent='0';return}
   const b=breakdown(start,now);
-  const total=Math.floor((now-start)/864e5);
-  $('days').textContent=total.toLocaleString();
-  $('dayWord').textContent=total===1?'day':'days';
+  const td=Math.floor((now-start)/DAY);
+  $('days').textContent=td.toLocaleString();
+  $('dayWord').textContent=td===1?'day':'days';
   $('y').textContent=b.y;$('m').textContent=b.m;$('d').textContent=b.d;
   $('h').textContent=pad(b.h);$('mi').textContent=pad(b.mi);$('s').textContent=pad(b.s);
   $('since').textContent='Since '+start.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -234,34 +398,96 @@ function tick(){
   const idx=list.findIndex(m=>m.at>now);
   const next=idx===-1?null:list[idx];
   if(next){
-    const prevAt=start;
-    const p=Math.min(1,Math.max(0,(now-prevAt)/(next.at-prevAt)));
+    const p=Math.min(1,Math.max(0,(now-start)/(next.at-start)));
     $('arc').style.strokeDashoffset=251.3*(1-p);
     $('pct').textContent=Math.floor(p*100)+'%';
     $('nextName').textContent=next.n;
-    const left=Math.ceil((next.at-now)/864e5);
+    const left=Math.ceil((next.at-now)/DAY);
     $('nextSub').textContent=`${left} ${left===1?'day':'days'} to go · ${fmtDate(next.at)}`;
   }else{
     $('arc').style.strokeDashoffset=0;$('pct').textContent='∞';
     $('nextName').textContent='Beyond milestones';$('nextSub').textContent='Every day counts.';
   }
-  if(total!==lastDays){lastDays=total;buildMilestones(now)}
+  if(td!==lastDays){lastDays=td;buildMilestones(now)}
 }
 
-// settings
-const dlg=$('dlg');
-$('edit').onclick=()=>{
-  const p=n=>String(n).padStart(2,'0');
-  $('date').value=`${start.getFullYear()}-${p(start.getMonth()+1)}-${p(start.getDate())}`;
-  $('time').value=`${p(start.getHours())}:${p(start.getMinutes())}`;
-  dlg.showModal();
-};
-$('form').addEventListener('submit',e=>{
-  if(e.submitter&&e.submitter.value==='save'){
-    const v=`${$('date').value}T${$('time').value||'00:00'}`;
-    const d=new Date(v);
-    if(!isNaN(d)){start=d;store.set(v);lastDays=-1;tick()}
+// ---- calculator
+const PRESETS={beer:[6,150],craft:[8,220],wine:[10,125],cocktail:[14,200],shot:[9,110]};
+let mode='drinks';
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===m));
+  preview();
+}
+function compute(){
+  if(mode==='drinks'){
+    const w=num($('dpw').value);
+    return {money:w/7*num($('price').value),kcal:w/7*num($('kcalDrink').value)};
   }
+  if(mode==='spend'){
+    const a=num($('spend').value);
+    return {money:$('per').value==='week'?a/7:a/30.4375,kcal:num($('kcalSpend').value)};
+  }
+  return {money:num($('dMoney').value),kcal:num($('dKcal').value)};
+}
+function preview(){
+  const {money,kcal}=compute();
+  $('preview').innerHTML=money||kcal
+    ?`About <b>${usd.format(money)}</b>/day · <b>${usd0.format(money*7)}</b>/week · <b>${usd0.format(money*365)}</b>/year`+(kcal?`<br><b>${Math.round(kcal).toLocaleString()}</b> calories/day · <b>${Math.round(kcal*7).toLocaleString()}</b>/week`:'')
+    :'Enter your numbers to see an estimate.';
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+$('preset').onchange=e=>{const p=PRESETS[e.target.value];if(p){$('price').value=p[0];$('kcalDrink').value=p[1];preview()}};
+['dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'].forEach(id=>$(id).addEventListener('input',preview));
+
+function openSettings(tab){
+  const d=start;
+  $('date').value=toISO(d).slice(0,10);$('time').value=toISO(d).slice(11);
+  const c=state.calc||{};
+  $('dpw').value=c.dpw??'';$('price').value=c.price??'';$('kcalDrink').value=c.kcalDrink??'';
+  $('spend').value=c.spend??'';$('per').value=c.per||'week';$('kcalSpend').value=c.kcalSpend??'';
+  $('dMoney').value=c.dMoney??'';$('dKcal').value=c.dKcal??'';
+  $('preset').value='';
+  setMode(c.mode||'drinks');
+  $('dlg').showModal();
+  if(tab)$('dlg').querySelector('hr:nth-of-type(1)').scrollIntoView();
+}
+$('edit').onclick=()=>openSettings();
+$('setupSavings').onclick=()=>openSettings(true);
+
+$('form').addEventListener('submit',e=>{
+  if(!(e.submitter&&e.submitter.value==='save'))return;
+  const v=`${$('date').value}T${$('time').value||'00:00'}`;
+  const d=new Date(v);
+  if(!isNaN(d)){
+    cur().s=v;start=d;
+    const prev=state.streaks[state.streaks.length-2];
+    if(prev&&prev.e&&new Date(prev.e)>d)prev.e=v; // keep history consistent
+  }
+  const {money,kcal}=compute();
+  state.calc={mode,dpw:$('dpw').value,price:$('price').value,kcalDrink:$('kcalDrink').value,
+    spend:$('spend').value,per:$('per').value,kcalSpend:$('kcalSpend').value,
+    dMoney:$('dMoney').value,dKcal:$('dKcal').value};
+  state.daily=money;state.kcalDaily=kcal;
+  save();lastDays=-1;tick();
+});
+
+// ---- reset
+$('resetBtn').onclick=()=>{
+  const now=new Date(),n=Math.floor(streakDays(cur(),now));
+  $('rnote').textContent=`Your ${n.toLocaleString()}-day streak is saved to history and counts toward your total and best streak. Start again whenever you're ready.`;
+  $('rdate').value=toISO(now).slice(0,10);$('rtime').value=toISO(now).slice(11);
+  $('dlg').close();$('rdlg').showModal();
+};
+$('rform').addEventListener('submit',e=>{
+  if(!(e.submitter&&e.submitter.value==='reset'))return;
+  const v=`${$('rdate').value}T${$('rtime').value||'00:00'}`;
+  const d=new Date(v);if(isNaN(d))return;
+  const prevStart=new Date(cur().s);
+  cur().e=toISO(d<prevStart?prevStart:d);
+  state.streaks.push({s:v,e:null});
+  start=d;save();lastDays=-1;tick();
 });
 
 tick();setInterval(tick,1000);

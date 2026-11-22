@@ -248,6 +248,16 @@ footer{text-align:center;font-size:12px;color:var(--muted-foreground);padding:6p
     <div class="preview" id="preview">Enter your numbers to see an estimate.</div>
 
     <hr>
+    <h3 style="margin-top:16px">Backup</h3>
+    <p class="note" id="bkNote">Save a copy of your data so it survives clearing the browser or switching phones.</p>
+    <div class="two" style="margin-top:12px">
+      <button type="button" class="btn" id="bkExport">Back up…</button>
+      <button type="button" class="btn" id="bkImport">Restore…</button>
+    </div>
+    <input type="file" id="bkFile" accept="application/json,.json" hidden>
+    <p class="note" id="bkMsg" style="margin-top:10px" role="status"></p>
+
+    <hr>
     <p class="note" style="margin-top:14px">Had a slip? Your streak is saved to history and you start again. It doesn't erase the days you've put together.</p>
     <button type="button" class="btn danger cta" id="resetBtn">Reset streak…</button>
 
@@ -449,6 +459,7 @@ function openSettings(tab){
   $('spend').value=c.spend??'';$('per').value=c.per||'week';$('kcalSpend').value=c.kcalSpend??'';
   $('dMoney').value=c.dMoney??'';$('dKcal').value=c.dKcal??'';
   $('preset').value='';
+  $('bkMsg').textContent=lastBackupText();
   setMode(c.mode||'drinks');
   $('dlg').showModal();
   if(tab)$('dlg').querySelector('hr:nth-of-type(1)').scrollIntoView();
@@ -472,6 +483,59 @@ $('form').addEventListener('submit',e=>{
   state.daily=money;state.kcalDaily=kcal;
   save();lastDays=-1;tick();
 });
+
+// ---- backup & restore
+function lastBackupText(){
+  const t=store.get('steady.lastBackup');
+  return t?`Last backup: ${fmtDate(new Date(t))}.`:'No backup yet.';
+}
+function sanitize(o){
+  if(!o||typeof o!=='object'||!Array.isArray(o.streaks)||!o.streaks.length)throw new Error('This file is not a Steady backup.');
+  const streaks=o.streaks.map(x=>{
+    if(!x||isNaN(new Date(x.s)))throw new Error('Backup has an invalid start date.');
+    if(x.e&&isNaN(new Date(x.e)))throw new Error('Backup has an invalid end date.');
+    return {s:String(x.s),e:x.e?String(x.e):null};
+  });
+  streaks.forEach((x,i)=>{if(i<streaks.length-1&&!x.e)throw new Error('Backup streak history is inconsistent.')});
+  streaks[streaks.length-1].e=null;
+  const c=(o.calc&&typeof o.calc==='object')?o.calc:{};
+  const calc={};
+  for(const k of ['mode','dpw','price','kcalDrink','spend','per','kcalSpend','dMoney','dKcal'])if(c[k]!==undefined)calc[k]=String(c[k]);
+  if(!['drinks','spend','direct'].includes(calc.mode))calc.mode='drinks';
+  return {streaks,calc,daily:num(o.daily),kcalDaily:num(o.kcalDaily)};
+}
+async function doBackup(){
+  const data=JSON.stringify({app:'steady',version:2,exported:new Date().toISOString(),...state},null,2);
+  const name=`steady-backup-${toISO(new Date()).slice(0,10)}.json`;
+  const file=new File([data],name,{type:'application/json'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Steady backup'});
+    }else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;
+      document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    }
+    store.set('steady.lastBackup',new Date().toISOString());
+    $('bkMsg').textContent='Backup saved. '+lastBackupText();
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    $('bkMsg').textContent='Could not create the backup.';
+  }
+}
+async function doRestore(file){
+  try{
+    const next=sanitize(JSON.parse(await file.text()));
+    const days=Math.floor(next.streaks.reduce((a,st)=>a+streakDays(st,new Date()),0));
+    if(!confirm(`Restore this backup (${next.streaks.length} streak${next.streaks.length===1?'':'s'}, ${days} sober days)? It replaces the data on this device.`))return;
+    state=next;save();start=startDate();lastDays=-1;tick();
+    $('dlg').close();
+  }catch(e){
+    $('bkMsg').textContent=e instanceof SyntaxError?'That file could not be read.':e.message;
+  }
+}
+$('bkExport').onclick=doBackup;
+$('bkImport').onclick=()=>$('bkFile').click();
+$('bkFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)doRestore(f)};
 
 // ---- reset
 $('resetBtn').onclick=()=>{
